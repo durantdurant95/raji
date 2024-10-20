@@ -1,7 +1,7 @@
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { GeistSans } from "geist/font/sans";
 import { ThemeProvider } from "next-themes";
-import Link from "next/link";
 import "./globals.css";
 
 export const metadata = {
@@ -17,22 +17,28 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={GeistSans.className} suppressHydrationWarning>
-      <body className="bg-background text-foreground">
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <main className="min-h-screen">
-            <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-              <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-                <Link href={"/"}>Raji</Link>
-                <ThemeSwitcher />
-              </div>
-            </nav>
-            <div className="container">{children}</div>
-          </main>
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="min-h-screen">
+              <SidebarTrigger />
+              {/* <nav className="w-full flex justify-center border-b h-20">
+                <div className="container flex justify-between items-center">
+                  <Link href={"/"}>Raji</Link>
+                  <div className="flex gap-2">
+                    <AuthDropdown />
+                  </div>
+                </div>
+              </nav> */}
+              <div className="container border grow-0 flex">{children}</div>
+            </main>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>
