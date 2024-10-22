@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
-export default async function Signup(props: { searchParams: Promise<Message> }) {
+export default async function SignupPage(props: {
+  searchParams: Promise<Message>;
+}) {
   const searchParams = await props.searchParams;
   if ("message" in searchParams) {
     return (
@@ -25,8 +27,10 @@ export default async function Signup(props: { searchParams: Promise<Message> }) 
         </Link>
       </p>
       <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
+        <Label htmlFor="name">Full name</Label>
+        <Input name="name" placeholder="Jhon Doe" required />
         <Label htmlFor="email">Email</Label>
-        <Input name="email" placeholder="you@example.com" required />
+        <Input name="email" placeholder="you@example.com" required />{" "}
         <Label htmlFor="password">Password</Label>
         <Input
           type="password"
