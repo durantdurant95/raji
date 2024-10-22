@@ -26,17 +26,9 @@ export default function RootLayout({
         >
           <SidebarProvider>
             <AppSidebar />
-            <main className="min-h-screen">
+            <main className="min-h-screen w-full">
               <SidebarTrigger />
-              {/* <nav className="w-full flex justify-center border-b h-20">
-                <div className="container flex justify-between items-center">
-                  <Link href={"/"}>Raji</Link>
-                  <div className="flex gap-2">
-                    <AuthDropdown />
-                  </div>
-                </div>
-              </nav> */}
-              <div className="container border grow-0 flex">{children}</div>
+              <div className="border grow-0 flex">{children}</div>
             </main>
           </SidebarProvider>
         </ThemeProvider>
