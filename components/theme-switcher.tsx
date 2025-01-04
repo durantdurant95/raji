@@ -43,13 +43,7 @@ const ThemeSwitcher = () => {
               size={ICON_SIZE}
               className={"text-muted-foreground"}
             />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
+          ) : null}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-content" align="start">
