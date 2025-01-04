@@ -13,11 +13,10 @@ import {
 } from "./ui/dropdown-menu";
 
 export default async function AuthDropdown() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   const userName = user?.user_metadata?.full_name || user?.email || "User";
   const firstLetter = userName.charAt(0).toUpperCase();
 
