@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
-export default async function Login(props: { searchParams: Promise<Message> }) {
+export default async function SignInPage(props: {
+  searchParams: Promise<Message>;
+}) {
   const searchParams = await props.searchParams;
   return (
     <form className="max-w-64 mx-auto pt-5 md:pt-20">
