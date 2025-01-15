@@ -1,14 +1,10 @@
 import { NavUser } from "@/components/nav-user";
-import {
-  Sidebar,
-  SidebarFooter,
-  SidebarRail
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import * as React from "react";
 
-  // This is sample data.
+// This is sample data.
 // const data = {
 //   user: {
 //     name: "shadcn",
@@ -121,20 +117,21 @@ import * as React from "react";
 //   ],
 // }
 
-export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export async function AppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const supabase = await createClient();
 
-  const supabase = await createClient()
-  
-  const { data, error } = await supabase.auth.getUser()
+  const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
-    redirect('/sign-in')
+    redirect("/sign-in");
   }
 
   const user = {
-    name: data?.user?.user_metadata.full_name,
-    email: data?.user?.email || '',
+    name: data?.user?.user_metadata.name,
+    email: data?.user?.email || "",
     avatar: data?.user?.user_metadata.avatar_url,
-  }
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -147,5 +144,5 @@ export async function AppSidebar({ ...props }: React.ComponentProps<typeof Sideb
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

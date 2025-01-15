@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { encodedRedirect } from "@/utils/utils";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -128,3 +129,60 @@ export const signOutAction = async () => {
   await supabase.auth.signOut();
   return redirect("/sign-in");
 };
+
+async function updateUser(userId: string, data: FormData) {
+  console.log("data", data);
+  const supabase = await createClient();
+  const fullName = data.get("fullName") as string;
+  const avatar = data.get("avatar") as File;
+
+  // Validate the data
+  if (!fullName) {
+    return { error: "Full name is required." };
+  }
+
+  // Upload the avatar file to Supabase storage
+  let avatarUrl = "";
+  if (avatar) {
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("profile-pictures")
+      .upload(`${avatar.name}`, avatar, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      return { error: "Failed to upload avatar." };
+    }
+
+    avatarUrl = uploadData?.path || "";
+  }
+
+  // Update the user record in Supabase
+  const { data: userData, error: updateError } = await supabase.auth.updateUser(
+    {
+      data: {
+        full_name: fullName,
+        avatar_url: avatarUrl,
+      },
+    }
+  );
+
+  if (updateError) {
+    return { error: "Failed to update user." };
+  }
+
+  return { success: true, user: userData };
+}
+
+export async function editUser(prevState: any, formData: FormData) {
+  const userId = formData.get("userId") as string;
+  const result = await updateUser(userId, formData);
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  revalidatePath("/edit-user");
+  return { success: true, user: result.user };
+}
