@@ -4,22 +4,27 @@ import { redirect } from "next/navigation";
 
 export default async function EditUserPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authData?.user) {
     redirect("/sign-in");
   }
-  const user = {
-    id: data.user.id,
-    fullName: data.user.user_metadata.name,
-    avatar: data.user.user_metadata.avatar_url,
-  };
 
-  console.log("user", user);
+  const userId = authData.user.id;
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (profileError || !profileData) {
+    redirect("/sign-in");
+  }
 
   return (
     <div className="max-w-md mx-auto mt-8">
       <h1 className="text-2xl font-bold mb-4">Edit Profile</h1>
-      <EditUserForm user={user} />
+      <EditUserForm profileData={profileData} />
     </div>
   );
 }

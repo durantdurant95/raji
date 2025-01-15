@@ -6,6 +6,26 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+async function createUserProfile(userId: string, fullName: string) {
+  const supabase = await createClient();
+
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .insert([
+      {
+        user_id: userId,
+        name: fullName,
+      },
+    ]);
+
+  if (profileError) {
+    console.error("Profile creation error:", profileError);
+    return { error: "Failed to create user profile." };
+  }
+
+  return { success: true, profile: profileData };
+}
+
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
@@ -21,7 +41,7 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data: signUpData, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -36,6 +56,13 @@ export const signUpAction = async (formData: FormData) => {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
   } else {
+    const userId = signUpData.user?.id;
+    if (userId) {
+      const profileResult = await createUserProfile(userId, name);
+      if (profileResult.error) {
+        return encodedRedirect("error", "/sign-up", profileResult.error);
+      }
+    }
     return encodedRedirect(
       "success",
       "/sign-up",
@@ -133,42 +160,48 @@ export const signOutAction = async () => {
 async function updateUser(userId: string, data: FormData) {
   console.log("data", data);
   const supabase = await createClient();
-  const fullName = data.get("fullName") as string;
-  const avatar = data.get("avatar") as File;
+  const name = data.get("name") as string;
+  const avatar_url = data.get("avatar_url") as File;
 
   // Validate the data
-  if (!fullName) {
+  if (!name) {
     return { error: "Full name is required." };
   }
 
   // Upload the avatar file to Supabase storage
   let avatarUrl = "";
-  if (avatar) {
+  if (avatar_url) {
+    console.log("Uploading avatar:", avatar_url.name);
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("profile-pictures")
-      .upload(`${avatar.name}`, avatar, {
-        cacheControl: "3600",
-        upsert: true,
+      .upload(`${avatar_url.name}`, avatar_url, {
+        // cacheControl: "3600",
+        upsert: true, // Enable upsert to overwrite existing files
       });
 
     if (uploadError) {
+      console.error("Upload error:", uploadError);
       return { error: "Failed to upload avatar." };
     }
 
-    avatarUrl = uploadData?.path || "";
+    const { data: publicUrlData } = supabase.storage
+      .from("profile-pictures")
+      .getPublicUrl(uploadData?.path || "");
+    avatarUrl = publicUrlData?.publicUrl || "";
+    console.log("Avatar uploaded successfully:", avatarUrl);
   }
 
-  // Update the user record in Supabase
-  const { data: userData, error: updateError } = await supabase.auth.updateUser(
-    {
-      data: {
-        full_name: fullName,
-        avatar_url: avatarUrl,
-      },
-    }
-  );
+  // Update the user record in the profiles table
+  const { data: userData, error: updateError } = await supabase
+    .from("profiles")
+    .update({
+      name: name,
+      avatar_url: avatarUrl,
+    })
+    .eq("user_id", userId);
 
   if (updateError) {
+    console.error("Update error:", updateError);
     return { error: "Failed to update user." };
   }
 
@@ -176,8 +209,9 @@ async function updateUser(userId: string, data: FormData) {
 }
 
 export async function editUser(prevState: any, formData: FormData) {
-  const userId = formData.get("userId") as string;
-  const result = await updateUser(userId, formData);
+  console.log("Form Data", formData);
+  const user_id = formData.get("user_id") as string;
+  const result = await updateUser(user_id, formData);
 
   if (result.error) {
     return { error: result.error };
