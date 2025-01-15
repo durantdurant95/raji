@@ -2,20 +2,18 @@
 
 import { editUser } from "@/app/actions";
 import { Label } from "@radix-ui/react-label";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-type Props = {
-  profileData: {
-    user_id: string;
-    name: string;
-    avatar_url: string;
-  };
-};
+import { Database } from "@/types/supabase";
 
+type Props = {
+  profileData: Database["public"]["Tables"]["profiles"]["Row"];
+};
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -29,7 +27,7 @@ export default function EditUserForm({ profileData }: Props) {
   const [state, formAction] = useActionState(editUser, null);
   const [name, setName] = useState(profileData.name);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    profileData.avatar_url
+    profileData.avatar_url || null
   );
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +55,7 @@ export default function EditUserForm({ profileData }: Props) {
         <div className="flex items-center space-x-4">
           <Avatar className="w-20 h-20">
             <AvatarImage
-              src={avatarPreview || profileData.avatar_url}
+              src={avatarPreview ?? profileData.avatar_url}
               alt={profileData.name}
             />
             <AvatarFallback>
@@ -88,7 +86,12 @@ export default function EditUserForm({ profileData }: Props) {
         />
       </div>
 
-      <SubmitButton />
+      <div className="flex justify-between">
+        <SubmitButton />
+        <Button>
+          <Link href="/dashboard">Back to Dashboard</Link>
+        </Button>
+      </div>
 
       {state?.error && <p className="text-red-500 mt-2">{state.error}</p>}
       {state?.success && (

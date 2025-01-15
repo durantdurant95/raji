@@ -127,10 +127,20 @@ export async function AppSidebar({
     redirect("/sign-in");
   }
 
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", data.user.id)
+    .single();
+
+  if (profileError || !profileData) {
+    redirect("/sign-in");
+  }
+
   const user = {
+    user_id: data.user.id,
     name: data?.user?.user_metadata.name,
-    email: data?.user?.email || "",
-    avatar: data?.user?.user_metadata.avatar_url,
+    avatar_url: profileData.avatar_url,
   };
 
   return (
