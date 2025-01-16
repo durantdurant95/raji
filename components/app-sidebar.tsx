@@ -1,8 +1,15 @@
+import { getUserProfile } from "@/app/actions";
 import { NavUser } from "@/components/nav-user";
-import { Sidebar, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
-import { createClient } from "@/utils/supabase/server";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+} from "@/components/ui/sidebar";
 import { redirect } from "next/navigation";
 import * as React from "react";
+import { NavMain } from "./nav-main";
+import { ThemeSwitcher } from "./theme-switcher";
 
 // This is sample data.
 // const data = {
@@ -120,38 +127,108 @@ import * as React from "react";
 export async function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
-  const supabase = await createClient();
+  const { profile, error } = await getUserProfile();
 
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
+  if (error) {
     redirect("/sign-in");
   }
 
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", data.user.id)
-    .single();
-
-  if (profileError || !profileData) {
-    redirect("/sign-in");
-  }
-
-  const user = {
-    user_id: data.user.id,
-    name: data?.user?.user_metadata.name,
-    avatar_url: profileData.avatar_url,
-  };
+  // const navMain = [
+  //   {
+  //     title: "Playground",
+  //     url: "#",
+  //     icon: SquareTerminal,
+  //     isActive: true,
+  //     items: [
+  //       {
+  //         title: "History",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Starred",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Settings",
+  //         url: "#",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     title: "Models",
+  //     url: "#",
+  //     icon: Bot,
+  //     items: [
+  //       {
+  //         title: "Genesis",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Explorer",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Quantum",
+  //         url: "#",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     title: "Documentation",
+  //     url: "#",
+  //     icon: BookOpen,
+  //     items: [
+  //       {
+  //         title: "Introduction",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Get Started",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Tutorials",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Changelog",
+  //         url: "#",
+  //       },
+  //     ],
+  //   },
+  //   {
+  //     title: "Settings",
+  //     url: "#",
+  //     icon: Settings2,
+  //     items: [
+  //       {
+  //         title: "General",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Team",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Billing",
+  //         url: "#",
+  //       },
+  //       {
+  //         title: "Limits",
+  //         url: "#",
+  //       },
+  //     ],
+  //   },
+  // ];
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
-      </SidebarContent> */}
-      <SidebarFooter>
-        <NavUser user={user} />
-      </SidebarFooter>
+      <SidebarContent>
+        {profile?.user_id && <NavMain user_id={profile.user_id} />}
+        {/* <NavProjects projects={projects || []} /> */}
+        <ThemeSwitcher />
+      </SidebarContent>
+      <SidebarFooter> {profile && <NavUser user={profile} />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

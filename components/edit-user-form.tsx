@@ -42,7 +42,6 @@ export default function EditUserForm({ profileData }: Props) {
   };
 
   const handleFullNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(profileData.avatar_url);
     setName(event.target.value);
   };
 

@@ -6,6 +6,27 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+export async function getUserProfile() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data?.user) {
+    return { error: "User not authenticated" };
+  }
+
+  const { data: profileData, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", data.user.id)
+    .single();
+
+  if (profileError || !profileData) {
+    return { error: "Profile not found" };
+  }
+
+  return { profile: profileData };
+}
+
 async function createUserProfile(userId: string, fullName: string) {
   const supabase = await createClient();
 
@@ -19,7 +40,6 @@ async function createUserProfile(userId: string, fullName: string) {
     ]);
 
   if (profileError) {
-    console.error("Profile creation error:", profileError);
     return { error: "Failed to create user profile." };
   }
 
@@ -53,7 +73,6 @@ export const signUpAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
   } else {
     const userId = signUpData.user?.id;
@@ -103,7 +122,6 @@ export const forgotPasswordAction = async (formData: FormData) => {
   });
 
   if (error) {
-    console.error(error.message);
     return encodedRedirect(
       "error",
       "/forgot-password",
@@ -158,7 +176,6 @@ export const signOutAction = async () => {
 };
 
 async function updateUser(userId: string, data: FormData) {
-  console.log("data", data);
   const supabase = await createClient();
   const name = data.get("name") as string;
   const avatar_url = data.get("avatar_url") as File;
@@ -171,7 +188,6 @@ async function updateUser(userId: string, data: FormData) {
   // Upload the avatar file to Supabase storage
   let avatarUrl = "";
   if (avatar_url) {
-    console.log("Uploading avatar:", avatar_url.name);
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("profile-pictures")
       .upload(`${avatar_url.name}`, avatar_url, {
@@ -180,7 +196,6 @@ async function updateUser(userId: string, data: FormData) {
       });
 
     if (uploadError) {
-      console.error("Upload error:", uploadError);
       return { error: "Failed to upload avatar." };
     }
 
@@ -188,7 +203,6 @@ async function updateUser(userId: string, data: FormData) {
       .from("profile-pictures")
       .getPublicUrl(uploadData?.path || "");
     avatarUrl = publicUrlData?.publicUrl || "";
-    console.log("Avatar uploaded successfully:", avatarUrl);
   }
 
   // Update the user record in the profiles table
@@ -201,7 +215,6 @@ async function updateUser(userId: string, data: FormData) {
     .eq("user_id", userId);
 
   if (updateError) {
-    console.error("Update error:", updateError);
     return { error: "Failed to update user." };
   }
 
@@ -209,14 +222,43 @@ async function updateUser(userId: string, data: FormData) {
 }
 
 export async function editUser(prevState: any, formData: FormData) {
-  console.log("Form Data", formData);
   const user_id = formData.get("user_id") as string;
   const result = await updateUser(user_id, formData);
 
   if (result.error) {
     return { error: result.error };
   }
-
   revalidatePath("/edit-user");
   return { success: true, user: result.user };
+}
+
+export async function fetchProjects(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("Error fetching projects:", error);
+    return { error };
+  }
+
+  return { projects: data };
+}
+
+export async function fetchTasksByStatus(projectId: string, status: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("status", status);
+
+  if (error) {
+    console.error("Error fetching tasks:", error);
+    return [];
+  }
+
+  return data;
 }

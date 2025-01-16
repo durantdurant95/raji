@@ -1,9 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import Header from "@/components/header";
-import {
-  SidebarInset,
-  SidebarProvider
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ReactNode } from "react";
 
 type LayoutProps = {
@@ -11,13 +8,12 @@ type LayoutProps = {
 };
 
 const DashboardLayout = ({ children }: LayoutProps) => {
-
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
         <Header />
-        <div>{children}</div>
+        <div className="grow">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
