@@ -7,9 +7,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserSelector } from "@/components/user-selector";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import * as React from "react";
 import { ProjectSelector } from "./project-selector";
+import { Button } from "./ui/button";
 
 export async function AppSidebar({
   ...props
@@ -29,7 +31,11 @@ export async function AppSidebar({
         {profile?.user_id && <ProjectSelector user_id={profile.user_id} />}
         {/* <NavProjects projects={projects || []} /> */}
       </SidebarContent>
-      <SidebarFooter className="flex justify-end"></SidebarFooter>
+      <SidebarFooter className="items-center">
+        <Link href="/projects">
+          <Button>Manage Projects</Button>
+        </Link>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

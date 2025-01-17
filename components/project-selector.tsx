@@ -30,13 +30,8 @@ export async function ProjectSelector({ user_id }: { user_id: string }) {
           <SidebarMenuItem>
             <CollapsibleTrigger asChild>
               <SidebarMenuButton tooltip="Projects">
-                <Link
-                  className="flex gap-2 items-center"
-                  href="dashboard/projects"
-                >
-                  <FolderKanban />
-                  <span>Projects</span>
-                </Link>
+                <FolderKanban />
+                <span>Projects</span>
                 <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
               </SidebarMenuButton>
             </CollapsibleTrigger>
@@ -45,7 +40,7 @@ export async function ProjectSelector({ user_id }: { user_id: string }) {
                 {projects.projects?.map((project) => (
                   <SidebarMenuSubItem key={project.name}>
                     <SidebarMenuSubButton asChild>
-                      <Link href={`/projects/${project.name}`}>
+                      <Link href={`dashboard/${project.name}`}>
                         <span>{project.name}</span>
                       </Link>
                     </SidebarMenuSubButton>
