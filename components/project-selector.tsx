@@ -1,68 +1,61 @@
-"use client";
-import { Database } from "@/types/supabase";
-import { ChevronDown } from "lucide-react";
-import React from "react";
-import { Button } from "./ui/button";
+import { fetchProjects } from "@/app/actions";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "./ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  SidebarGroup,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from "@/components/ui/sidebar";
+import { ChevronRight, FolderKanban } from "lucide-react";
+import Link from "next/link";
 
-type Props = {
-  projects: Database["public"]["Tables"]["projects"]["Row"][];
-};
-
-export default function ProjectSelector({ projects }: Props) {
-  const [open, setOpen] = React.useState(false);
-
+export async function ProjectSelector({ user_id }: { user_id: string }) {
+  const projects = await fetchProjects(user_id);
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
+    <SidebarGroup>
+      <SidebarMenu>
+        <Collapsible
+          key="Projects"
+          asChild
+          defaultOpen={true}
+          className="group/collapsible"
         >
-          <div className="flex items-center gap-2 mr-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-background">
-              {projects[0].name.charAt(0)}
-            </div>
-            <span className="truncate">{projects[0].name}</span>
-          </div>
-          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
-        <Command>
-          <CommandInput placeholder="Search projects..." />
-          <CommandList>
-            <CommandEmpty>No projects found.</CommandEmpty>
-            <CommandGroup>
-              {projects.map((project) => (
-                <CommandItem
-                  key={project.name}
-                  onSelect={() => {
-                    setOpen(false);
-                  }}
+          <SidebarMenuItem>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton tooltip="Projects">
+                <Link
+                  className="flex gap-2 items-center"
+                  href="dashboard/projects"
                 >
-                  <div className="flex items-center">
-                    {/* <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-500 text-white">
-                    {project.icon}
-                  </div> */}
-                    <span>{project.name}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  <FolderKanban />
+                  <span>Projects</span>
+                </Link>
+                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarMenuSub>
+                {projects.projects?.map((project) => (
+                  <SidebarMenuSubItem key={project.name}>
+                    <SidebarMenuSubButton asChild>
+                      <Link href={`/projects/${project.name}`}>
+                        <span>{project.name}</span>
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                ))}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </SidebarMenuItem>
+        </Collapsible>
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }

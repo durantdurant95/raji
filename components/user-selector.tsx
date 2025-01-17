@@ -31,7 +31,7 @@ import Link from "next/link";
 type Props = {
   user: Database["public"]["Tables"]["profiles"]["Row"];
 };
-export function NavUser({ user }: Props) {
+export function UserSelector({ user }: Props) {
   const { isMobile } = useSidebar();
 
   return (
