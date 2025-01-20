@@ -191,7 +191,7 @@ async function updateUser(userId: string, data: FormData) {
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("profile-pictures")
       .upload(`${avatar_url.name}`, avatar_url, {
-        // cacheControl: "3600",
+        cacheControl: "3600",
         upsert: true, // Enable upsert to overwrite existing files
       });
 
@@ -261,4 +261,30 @@ export async function fetchTasksByStatus(projectId: string, status: string) {
   }
 
   return data;
+}
+
+export async function createProject(formData: FormData) {
+  const supabase = await createClient();
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+
+  if (!name) {
+    return { error: "Project name is required" };
+  }
+
+  const user = (await supabase.auth.getUser()).data.user;
+  if (!user) {
+    return { error: "User not authenticated" };
+  }
+  const userId = user.id;
+  const { data, error } = await supabase
+    .from("projects")
+    .insert([{ name, description, user_id: userId }])
+    .select();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, project: data[0] };
 }

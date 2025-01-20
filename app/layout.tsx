@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "next-themes";
 import { Instrument_Sans } from "next/font/google";
@@ -33,9 +34,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <main className="min-h-screen w-full">
-            {children}
-          </main>
+          <main className="min-h-screen w-full">{children}</main>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
