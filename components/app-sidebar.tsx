@@ -29,7 +29,6 @@ export async function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         {profile?.user_id && <ProjectSelector user_id={profile.user_id} />}
-        {/* <NavProjects projects={projects || []} /> */}
       </SidebarContent>
       <SidebarFooter className="items-center">
         <Link href="/projects">
