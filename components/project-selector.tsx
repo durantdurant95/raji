@@ -16,8 +16,8 @@ import {
 import { ChevronRight, FolderKanban } from "lucide-react";
 import Link from "next/link";
 
-export async function ProjectSelector({ user_id }: { user_id: string }) {
-  const projects = await fetchProjects(user_id);
+export async function ProjectSelector() {
+  const projects = await fetchProjects();
   return (
     <SidebarGroup>
       <SidebarMenu>

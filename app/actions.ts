@@ -232,12 +232,18 @@ export async function editUser(prevState: any, formData: FormData) {
   return { success: true, user: result.user };
 }
 
-export async function fetchProjects(userId: string) {
+export async function fetchProjects() {
   const supabase = await createClient();
+  const user = (await supabase.auth.getUser()).data.user;
+
+  if (!user) {
+    return { error: "User not authenticated" };
+  }
+
   const { data, error } = await supabase
     .from("projects")
     .select("*")
-    .eq("user_id", userId);
+    .eq("user_id", user.id);
 
   if (error) {
     console.error("Error fetching projects:", error);
@@ -287,4 +293,34 @@ export async function createProject(formData: FormData) {
   }
 
   return { success: true, project: data[0] };
+}
+
+export async function updateProject(
+  id: string,
+  name: string,
+  description: string
+) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ name, description })
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true, project: data[0] };
+}
+
+export async function deleteProject(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("projects").delete().eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
 }

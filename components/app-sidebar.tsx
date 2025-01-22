@@ -27,11 +27,9 @@ export async function AppSidebar({
       <SidebarHeader>
         {profile && <UserSelector user={profile} />}
       </SidebarHeader>
-      <SidebarContent>
-        {profile?.user_id && <ProjectSelector user_id={profile.user_id} />}
-      </SidebarContent>
+      <SidebarContent>{<ProjectSelector />}</SidebarContent>
       <SidebarFooter className="items-center">
-        <Link href="/projects">
+        <Link href="/dashboard/projects">
           <Button>Manage Projects</Button>
         </Link>
       </SidebarFooter>
