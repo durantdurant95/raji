@@ -40,7 +40,7 @@ export async function ProjectSelector() {
                 {projects.projects?.map((project) => (
                   <SidebarMenuSubItem key={project.name}>
                     <SidebarMenuSubButton asChild>
-                      <Link href={`dashboard/${project.name}`}>
+                      <Link href={`/dashboard/${project.name}`}>
                         <span>{project.name}</span>
                       </Link>
                     </SidebarMenuSubButton>

@@ -11,9 +11,6 @@ export default function ProjectsPage() {
         </div>
       }
     >
-      {/* <div className="flex items-center justify-center h-full">
-        <Loader size="2rem" className="animate-spin" />
-      </div> */}
       <ProjectsList />
     </Suspense>
   );
