@@ -30,7 +30,7 @@ export async function AppSidebar({
       <SidebarContent>
         <ProjectSelector />
       </SidebarContent>
-      <SidebarFooter className="items-center">
+      <SidebarFooter className="items-center gap-4 p-4">
         <Link href="/dashboard/projects">
           <Button>Manage Projects</Button>
         </Link>
