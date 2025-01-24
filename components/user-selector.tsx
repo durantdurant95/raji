@@ -9,7 +9,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { signOutAction } from "@/app/actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -26,6 +25,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Database } from "@/types/supabase";
+import { signOut } from "@/utils/supabase/actions/auth";
 import Link from "next/link";
 
 type Props = {
@@ -85,7 +85,7 @@ export function UserSelector({ user }: Props) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOutAction}>
+            <DropdownMenuItem onClick={signOut}>
               <LogOut />
               Log out
             </DropdownMenuItem>

@@ -1,4 +1,3 @@
-import { getUserProfile } from "@/app/actions";
 import {
   Sidebar,
   SidebarContent,
@@ -7,6 +6,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserSelector } from "@/components/user-selector";
+import { getUserProfile } from "@/utils/supabase/actions/auth";
 import { FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";

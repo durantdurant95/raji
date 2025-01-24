@@ -1,5 +1,6 @@
 "use client";
 
+import { Database } from "@/types/supabase";
 import {
   closestCorners,
   DndContext,
@@ -10,58 +11,59 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AddTask from "./add-task-dialog";
 import Column from "./column";
 import Task from "./task";
 
-type TaskType = {
-  id: string;
-  content: string;
-};
-
-type ColumnType = {
-  id: string;
-  title: string;
-  taskIds: string[];
-};
-
 type BoardData = {
-  tasks: { [key: string]: TaskType };
-  columns: { [key: string]: ColumnType };
+  tasks: { [key: string]: Database["public"]["Tables"]["tasks"]["Row"] };
+  columns: { [key: string]: { id: string; title: string; taskIds: string[] } };
   columnOrder: string[];
 };
 
-const initialData: BoardData = {
-  tasks: {
-    "task-1": { id: "task-1", content: "Take out the garbage" },
-    "task-2": { id: "task-2", content: "Watch my favorite show" },
-    "task-3": { id: "task-3", content: "Charge my phone" },
-    "task-4": { id: "task-4", content: "Cook dinner" },
-  },
-  columns: {
-    "column-1": {
-      id: "column-1",
-      title: "To do",
-      taskIds: ["task-1", "task-2", "task-3", "task-4"],
-    },
+const mapTasksToBoardData = (
+  tasks: Database["public"]["Tables"]["tasks"]["Row"][],
+): BoardData => {
+  const taskMap: {
+    [key: string]: Database["public"]["Tables"]["tasks"]["Row"];
+  } = {};
+  const columns = {
+    "column-1": { id: "column-1", title: "To do", taskIds: [] as string[] },
     "column-2": {
       id: "column-2",
       title: "In progress",
-      taskIds: [],
+      taskIds: [] as string[],
     },
-    "column-3": {
-      id: "column-3",
-      title: "Done",
-      taskIds: [],
-    },
-  },
-  columnOrder: ["column-1", "column-2", "column-3"],
+    "column-3": { id: "column-3", title: "Done", taskIds: [] as string[] },
+  };
+
+  tasks.forEach((task) => {
+    taskMap[task.id] = task;
+    columns["column-1"].taskIds.push(task.id); // Assuming all tasks start in "To do" column
+  });
+
+  return {
+    tasks: taskMap,
+    columns,
+    columnOrder: ["column-1", "column-2", "column-3"],
+  };
 };
 
-export default function Board() {
-  const [boardData, setBoardData] = useState<BoardData>(initialData);
+type BoardProps = {
+  project: Database["public"]["Tables"]["projects"]["Row"];
+  tasks: Database["public"]["Tables"]["tasks"]["Row"][];
+};
+
+export default function Board({ project, tasks }: BoardProps) {
+  const [boardData, setBoardData] = useState<BoardData>(() =>
+    mapTasksToBoardData(tasks),
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBoardData(mapTasksToBoardData(tasks));
+  }, [tasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -176,7 +178,17 @@ export default function Board() {
 
   const addTask = (content: string) => {
     const newTaskId = `task-${Object.keys(boardData.tasks).length + 1}`;
-    const newTask = { id: newTaskId, content };
+    const newTask = {
+      id: newTaskId,
+      title: content,
+      status: "To do",
+      project_id: project.id,
+      created_at: null,
+      description: null,
+      due_date: null,
+      priority: null,
+      updated_at: null,
+    };
     const newBoardData = {
       ...boardData,
       tasks: {
@@ -197,7 +209,7 @@ export default function Board() {
   return (
     <div className="flex h-full flex-col">
       <div className="z-10 flex items-center justify-between p-4">
-        <h1 className="text-xl font-bold">Here goes my Project name</h1>
+        <h1 className="text-xl font-bold">{project.name}</h1>
         <AddTask onAddTask={addTask} />
       </div>
       <DndContext
@@ -225,7 +237,7 @@ export default function Board() {
               task={
                 boardData.tasks[activeId] || {
                   id: activeId,
-                  content: "Task not found",
+                  title: "Task not found",
                 }
               }
               index={0}

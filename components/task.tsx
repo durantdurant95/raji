@@ -1,11 +1,9 @@
+import { Database } from "@/types/supabase";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 type TaskProps = {
-  task: {
-    id: string;
-    content: string;
-  };
+  task: Database["public"]["Tables"]["tasks"]["Row"];
   index: number;
   isDragging?: boolean;
 };
@@ -37,7 +35,7 @@ export default function Task({ task, isDragging = false }: TaskProps) {
         isDragging || isSortableDragging ? "" : ""
       }`}
     >
-      {task.content}
+      {task.title}
     </div>
   );
 }

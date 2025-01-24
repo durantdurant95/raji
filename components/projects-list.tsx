@@ -1,4 +1,3 @@
-import { deleteProject, fetchProjects } from "@/app/actions";
 import {
   Table,
   TableBody,
@@ -7,30 +6,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
+import { fetchProjects } from "@/utils/supabase/actions/projects";
 import { DeleteProjectDialog } from "./delete-project-dialog";
 import { EditProjectDialog } from "./edit-project-dialog";
 
 export async function ProjectsList() {
   const projects = await fetchProjects();
-
-  async function handleDelete(id: string) {
-    const response = await deleteProject(id);
-
-    if (response.error) {
-      toast.error("Error", {
-        description: response.error,
-      });
-    } else {
-      toast.success("Success", {
-        description: "Project deleted successfully!",
-      });
-    }
-  }
-
-  if ("error" in projects) {
-    return <div>Error: {projects.error?.toString()}</div>;
-  }
 
   return (
     <Table>
@@ -42,7 +23,7 @@ export async function ProjectsList() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {projects.projects.map((project) => (
+        {projects?.projects?.map((project) => (
           <TableRow key={project.id}>
             <TableCell className="font-medium">{project.name}</TableCell>
             <TableCell>{project.description}</TableCell>

@@ -1,4 +1,3 @@
-import { fetchProjects } from "@/app/actions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,6 +12,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { fetchProjects } from "@/utils/supabase/actions/projects";
 import { ChevronRight, FolderKanban } from "lucide-react";
 import Link from "next/link";
 
@@ -40,7 +40,7 @@ export async function ProjectSelector() {
                 {projects.projects?.map((project) => (
                   <SidebarMenuSubItem key={project.name}>
                     <SidebarMenuSubButton asChild>
-                      <Link href={`/dashboard/${project.name}`}>
+                      <Link href={`/dashboard/${project.id}`}>
                         <span>{project.name}</span>
                       </Link>
                     </SidebarMenuSubButton>

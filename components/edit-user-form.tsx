@@ -1,6 +1,5 @@
 "use client";
 
-import { editUser } from "@/app/actions";
 import { Label } from "@radix-ui/react-label";
 import Link from "next/link";
 import { useActionState, useState } from "react";
@@ -10,6 +9,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 import { Database } from "@/types/supabase";
+import { editUser } from "@/utils/supabase/actions/auth";
 
 type Props = {
   profileData: Database["public"]["Tables"]["profiles"]["Row"];
@@ -27,7 +27,7 @@ export default function EditUserForm({ profileData }: Props) {
   const [state, formAction] = useActionState(editUser, null);
   const [name, setName] = useState(profileData.name);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
-    profileData.avatar_url || null
+    profileData.avatar_url || null,
   );
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,7 +52,7 @@ export default function EditUserForm({ profileData }: Props) {
       <div className="space-y-2">
         <Label htmlFor="avatar">Profile Picture</Label>
         <div className="flex items-center space-x-4">
-          <Avatar className="w-20 h-20">
+          <Avatar className="h-20 w-20">
             <AvatarImage
               src={avatarPreview ?? profileData.avatar_url}
               alt={profileData.name}
@@ -92,9 +92,9 @@ export default function EditUserForm({ profileData }: Props) {
         </Button>
       </div>
 
-      {state?.error && <p className="text-red-500 mt-2">{state.error}</p>}
+      {state?.error && <p className="mt-2 text-red-500">{state.error}</p>}
       {state?.success && (
-        <p className="text-green-500 mt-2">Profile updated successfully!</p>
+        <p className="mt-2 text-green-500">Profile updated successfully!</p>
       )}
     </form>
   );

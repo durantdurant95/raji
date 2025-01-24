@@ -1,3 +1,4 @@
+import { Database } from "@/types/supabase";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -10,10 +11,7 @@ type ColumnProps = {
     id: string;
     title: string;
   };
-  tasks: {
-    id: string;
-    content: string;
-  }[];
+  tasks: Database["public"]["Tables"]["tasks"]["Row"][];
 };
 
 export default function Column({ column, tasks }: ColumnProps) {

@@ -1,8 +1,8 @@
 "use client";
 
-import { deleteProject } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Database } from "@/types/supabase";
+import { deleteProject } from "@/utils/supabase/actions/projects";
 import { Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,15 +25,10 @@ export function DeleteProjectDialog({
   project: Database["public"]["Tables"]["projects"]["Row"];
 }) {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   async function handleDelete(projectId: string) {
-    setIsLoading(true);
-
     const response = await deleteProject(projectId);
-
-    setIsLoading(false);
 
     if (response.error) {
       toast.error("Error", {

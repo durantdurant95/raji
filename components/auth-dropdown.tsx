@@ -1,4 +1,4 @@
-import { signOutAction } from "@/app/actions";
+import { signOut } from "@/utils/supabase/actions/auth";
 import { createClient } from "@/utils/supabase/server";
 import { LogIn, LogOut, UserPlus } from "lucide-react";
 import Link from "next/link";
@@ -34,7 +34,7 @@ export default async function AuthDropdown() {
           <DropdownMenuItem>
             <form>
               <button
-                formAction={signOutAction}
+                formAction={signOut}
                 className="flex w-full items-center py-1"
               >
                 <LogOut className="mr-2 h-4 w-4" />

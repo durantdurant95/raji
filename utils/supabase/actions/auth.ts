@@ -46,7 +46,7 @@ async function createUserProfile(userId: string, fullName: string) {
   return { success: true, profile: profileData };
 }
 
-export const signUpAction = async (formData: FormData) => {
+export const signUp = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const name = formData.get("name")?.toString();
@@ -57,7 +57,7 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/sign-up",
-      "Full name, email, and password are required"
+      "Full name, email, and password are required",
     );
   }
 
@@ -85,12 +85,12 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "success",
       "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link."
+      "Thanks for signing up! Please check your email for a verification link.",
     );
   }
 };
 
-export const signInAction = async (formData: FormData) => {
+export const signIn = async (formData: FormData) => {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const supabase = await createClient();
@@ -107,7 +107,7 @@ export const signInAction = async (formData: FormData) => {
   return redirect("/dashboard");
 };
 
-export const forgotPasswordAction = async (formData: FormData) => {
+export const forgotPassword = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
@@ -125,7 +125,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/forgot-password",
-      "Could not reset password"
+      "Could not reset password",
     );
   }
 
@@ -136,11 +136,11 @@ export const forgotPasswordAction = async (formData: FormData) => {
   return encodedRedirect(
     "success",
     "/forgot-password",
-    "Check your email for a link to reset your password."
+    "Check your email for a link to reset your password.",
   );
 };
 
-export const resetPasswordAction = async (formData: FormData) => {
+export const resetPassword = async (formData: FormData) => {
   const supabase = await createClient();
 
   const password = formData.get("password") as string;
@@ -150,7 +150,7 @@ export const resetPasswordAction = async (formData: FormData) => {
     encodedRedirect(
       "error",
       "/reset-password",
-      "Password and confirm password are required"
+      "Password and confirm password are required",
     );
   }
 
@@ -169,7 +169,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   encodedRedirect("success", "/reset-password", "Password updated");
 };
 
-export const signOutAction = async () => {
+export const signOut = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return redirect("/sign-in");
@@ -230,97 +230,4 @@ export async function editUser(prevState: any, formData: FormData) {
   }
   revalidatePath("/edit-user");
   return { success: true, user: result.user };
-}
-
-export async function fetchProjects() {
-  const supabase = await createClient();
-  const user = (await supabase.auth.getUser()).data.user;
-
-  if (!user) {
-    return { error: "User not authenticated" };
-  }
-
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (error) {
-    console.error("Error fetching projects:", error);
-    return { error };
-  }
-
-  return { projects: data };
-}
-
-export async function fetchTasksByStatus(projectId: string, status: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("*")
-    .eq("project_id", projectId)
-    .eq("status", status);
-
-  if (error) {
-    console.error("Error fetching tasks:", error);
-    return [];
-  }
-
-  return data;
-}
-
-export async function createProject(formData: FormData) {
-  const supabase = await createClient();
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
-
-  if (!name) {
-    return { error: "Project name is required" };
-  }
-
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) {
-    return { error: "User not authenticated" };
-  }
-  const userId = user.id;
-  const { data, error } = await supabase
-    .from("projects")
-    .insert([{ name, description, user_id: userId }])
-    .select();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, project: data[0] };
-}
-
-export async function updateProject(
-  id: string,
-  name: string,
-  description: string
-) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("projects")
-    .update({ name, description })
-    .eq("id", id)
-    .select();
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true, project: data[0] };
-}
-
-export async function deleteProject(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("projects").delete().eq("id", id);
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { success: true };
 }
