@@ -7,6 +7,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { UserSelector } from "@/components/user-selector";
+import { FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import * as React from "react";
@@ -32,7 +33,10 @@ export async function AppSidebar({
       </SidebarContent>
       <SidebarFooter className="items-center gap-4 p-4">
         <Link href="/dashboard/projects">
-          <Button>Manage Projects</Button>
+          <Button>
+            <FolderKanban />
+            Manage Projects
+          </Button>
         </Link>
       </SidebarFooter>
       <SidebarRail />
