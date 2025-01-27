@@ -56,10 +56,7 @@ export async function updateTaskStatus(taskId: string, status: string) {
   try {
     const { data, error } = await supabase
       .from("tasks")
-      .update({
-        status,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ status })
       .eq("id", taskId)
       .select();
 
