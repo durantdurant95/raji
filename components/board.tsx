@@ -210,7 +210,7 @@ export default function Board({ project, tasks }: BoardProps) {
     <div className="flex h-full flex-col">
       <div className="z-10 flex items-center justify-between p-4">
         <h1 className="text-xl font-bold">{project.name}</h1>
-        <AddTask onAddTask={addTask} />
+        <AddTask projectId={project.id} />
       </div>
       <DndContext
         sensors={sensors}
