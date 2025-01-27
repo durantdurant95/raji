@@ -3,13 +3,14 @@
 import { Database } from "@/types/supabase";
 import { updateTaskStatus } from "@/utils/supabase/actions/tasks";
 import {
-  closestCorners,
+  closestCenter,
   DndContext,
   DragEndEvent,
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   useSensor,
   useSensors,
@@ -127,11 +128,13 @@ export default function Board({ project, tasks }: BoardProps) {
   };
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
-    if (!over) return;
+    if (!over || !initialColumn) return;
 
     const overColumnId = getColumnId(over.id.toString());
-    if (!initialColumn || !overColumnId || initialColumn === overColumnId)
-      return;
+    if (!overColumnId) return;
+
+    const currentColumn = findColumnOfTask(active.id.toString());
+    if (currentColumn === overColumnId) return;
 
     setBoardData(updateColumns(active.id.toString(), overColumnId));
   };
@@ -182,7 +185,12 @@ export default function Board({ project, tasks }: BoardProps) {
       </div>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always,
+          },
+        }}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}

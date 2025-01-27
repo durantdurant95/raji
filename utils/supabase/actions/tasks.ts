@@ -56,7 +56,10 @@ export async function updateTaskStatus(taskId: string, status: string) {
   try {
     const { data, error } = await supabase
       .from("tasks")
-      .update({ status })
+      .update({
+        status,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", taskId)
       .select();
 
@@ -66,7 +69,6 @@ export async function updateTaskStatus(taskId: string, status: string) {
     }
 
     console.log("Task status updated successfully:", data);
-    // revalidatePath("/projects/[id]");
     return data;
   } catch (error) {
     console.error("Error in updateTaskStatus:", error);
