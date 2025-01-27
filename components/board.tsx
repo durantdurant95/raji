@@ -29,10 +29,10 @@ const mapTasksToBoardData = (
     [key: string]: Database["public"]["Tables"]["tasks"]["Row"];
   } = {};
   const columns = {
-    "column-1": { id: "column-1", title: "To do", taskIds: [] as string[] },
+    "column-1": { id: "column-1", title: "To Do", taskIds: [] as string[] },
     "column-2": {
       id: "column-2",
-      title: "In progress",
+      title: "In Progress",
       taskIds: [] as string[],
     },
     "column-3": { id: "column-3", title: "Done", taskIds: [] as string[] },
@@ -174,36 +174,6 @@ export default function Board({ project, tasks }: BoardProps) {
     }
 
     setActiveId(null);
-  };
-
-  const addTask = (content: string) => {
-    const newTaskId = `task-${Object.keys(boardData.tasks).length + 1}`;
-    const newTask = {
-      id: newTaskId,
-      title: content,
-      status: "To do",
-      project_id: project.id,
-      created_at: null,
-      description: null,
-      due_date: null,
-      priority: null,
-      updated_at: null,
-    };
-    const newBoardData = {
-      ...boardData,
-      tasks: {
-        ...boardData.tasks,
-        [newTaskId]: newTask,
-      },
-      columns: {
-        ...boardData.columns,
-        "column-1": {
-          ...boardData.columns["column-1"],
-          taskIds: [...boardData.columns["column-1"].taskIds, newTaskId],
-        },
-      },
-    };
-    setBoardData(newBoardData);
   };
 
   return (

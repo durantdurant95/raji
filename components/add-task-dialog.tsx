@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +57,7 @@ export default function AddTask({ projectId }: AddTaskProps) {
         console.log("Task added:", newTask);
       }
       setIsOpen(false);
+      toast.success("Task added successfully");
       resetForm();
     }
   };

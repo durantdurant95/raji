@@ -2,6 +2,7 @@
 
 import { Database } from "@/types/supabase";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export async function fetchTasksByProject(projectId: string) {
   const supabase = await createClient();
@@ -44,6 +45,6 @@ export async function addTaskToProject(
     console.error("Error adding task:", error);
     return null;
   }
-
+  revalidatePath(`/projects/${projectId}`);
   return data;
 }
