@@ -185,14 +185,16 @@ async function updateUser(userId: string, data: FormData) {
     return { error: "Full name is required." };
   }
 
-  // Upload the avatar file to Supabase storage
-  let avatarUrl = "";
-  if (avatar_url) {
+  // Prepare update data
+  const updateData: { name: string; avatar_url?: string } = { name };
+
+  // Only handle avatar upload if a new file is provided
+  if (avatar_url && avatar_url.size > 0) {
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("profile-pictures")
       .upload(`${avatar_url.name}`, avatar_url, {
         cacheControl: "3600",
-        upsert: true, // Enable upsert to overwrite existing files
+        upsert: true,
       });
 
     if (uploadError) {
@@ -202,16 +204,14 @@ async function updateUser(userId: string, data: FormData) {
     const { data: publicUrlData } = supabase.storage
       .from("profile-pictures")
       .getPublicUrl(uploadData?.path || "");
-    avatarUrl = publicUrlData?.publicUrl || "";
+
+    updateData.avatar_url = publicUrlData?.publicUrl || "";
   }
 
   // Update the user record in the profiles table
   const { data: userData, error: updateError } = await supabase
     .from("profiles")
-    .update({
-      name: name,
-      avatar_url: avatarUrl,
-    })
+    .update(updateData)
     .eq("user_id", userId);
 
   if (updateError) {
@@ -224,6 +224,8 @@ async function updateUser(userId: string, data: FormData) {
 export async function editUser(prevState: any, formData: FormData) {
   const user_id = formData.get("user_id") as string;
   const result = await updateUser(user_id, formData);
+
+  console.log("Edit user result:", result);
 
   if (result.error) {
     return { error: result.error };

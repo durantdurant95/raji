@@ -22,8 +22,8 @@ export default async function EditUserPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8">
-      <h1 className="text-2xl font-bold mb-4">Edit Profile</h1>
+    <div className="mx-auto max-w-md pt-16">
+      <h1 className="pb-4 text-center text-2xl font-bold">Edit Your Profile</h1>
       <EditUserForm profileData={profileData} />
     </div>
   );
