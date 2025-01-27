@@ -5,7 +5,10 @@ import { updateTaskStatus } from "@/utils/supabase/actions/tasks";
 import {
   closestCorners,
   DndContext,
+  DragEndEvent,
+  DragOverEvent,
   DragOverlay,
+  DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -69,16 +72,16 @@ export default function Board({ project, tasks }: BoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [initialColumn, setInitialColumn] = useState<string | null>(null);
 
-  useEffect(() => {
-    setBoardData(mapTasksToBoardData(tasks));
-  }, [tasks]);
-
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  useEffect(() => {
+    setBoardData(mapTasksToBoardData(tasks));
+  }, [tasks]);
 
   const findColumnOfTask = (taskId: string): string | null => {
     for (const [columnId, column] of Object.entries(boardData.columns)) {
@@ -90,86 +93,61 @@ export default function Board({ project, tasks }: BoardProps) {
   };
 
   const getColumnId = (id: string): string | null => {
-    if (id in boardData.columns) {
-      return id;
-    }
-    return findColumnOfTask(id);
+    return id in boardData.columns ? id : findColumnOfTask(id);
   };
 
-  const handleDragStart = (event: any) => {
-    const { active } = event;
-    setActiveId(active.id);
-    const startingColumn = findColumnOfTask(active.id);
-    setInitialColumn(startingColumn);
-    console.log("DragStart - Initial Column:", startingColumn);
-  };
-
-  const handleDragOver = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id;
-    const overId = over.id;
-
-    const overColumnId = getColumnId(overId);
-
-    if (!initialColumn || !overColumnId || initialColumn === overColumnId) {
-      return;
-    }
-
-    setBoardData((prev) => {
-      // First, remove the task from all columns to prevent duplicates
+  const updateColumns = (taskId: string, targetColumnId: string) => {
+    return (prev: BoardData) => {
       const updatedColumns = Object.entries(prev.columns).reduce(
-        (acc, [columnId, column]) => {
-          acc[columnId] = {
+        (acc, [columnId, column]) => ({
+          ...acc,
+          [columnId]: {
             ...column,
-            taskIds: column.taskIds.filter((id) => id !== activeId),
-          };
-          return acc;
-        },
+            taskIds: column.taskIds.filter((id) => id !== taskId),
+          },
+        }),
         { ...prev.columns },
       );
 
-      // Then add it to the target column
       return {
         ...prev,
         columns: {
           ...updatedColumns,
-          [overColumnId]: {
-            ...updatedColumns[overColumnId],
-            taskIds: [...updatedColumns[overColumnId].taskIds, activeId],
+          [targetColumnId]: {
+            ...updatedColumns[targetColumnId],
+            taskIds: [...updatedColumns[targetColumnId].taskIds, taskId],
           },
         },
       };
-    });
+    };
+  };
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    setActiveId(active.id.toString());
+    setInitialColumn(findColumnOfTask(active.id.toString()));
   };
 
-  const handleDragEnd = async (event: any) => {
-    const { active, over } = event;
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
     if (!over) return;
 
-    const activeId = active.id;
-    const overId = over.id;
-
-    const overColumnId = getColumnId(overId);
-
-    console.log("DragEnd - Initial Column:", initialColumn);
-    console.log("DragEnd - Over Column:", overColumnId);
-    console.log("DragEnd - Over ID:", overId);
-
-    if (!initialColumn || !overColumnId) {
-      console.log("DragEnd - Missing column IDs");
+    const overColumnId = getColumnId(over.id.toString());
+    if (!initialColumn || !overColumnId || initialColumn === overColumnId)
       return;
-    }
+
+    setBoardData(updateColumns(active.id.toString(), overColumnId));
+  };
+
+  const handleDragEnd = async ({ active, over }: DragEndEvent) => {
+    if (!over || !initialColumn) return;
+
+    const overColumnId = getColumnId(over.id.toString());
+    if (!overColumnId) return;
 
     if (initialColumn === overColumnId) {
-      console.log("DragEnd - Same column reorder");
       const column = boardData.columns[initialColumn];
       if (!column) return;
 
-      const oldIndex = column.taskIds.indexOf(activeId);
-      const newIndex = column.taskIds.indexOf(overId);
-
+      const oldIndex = column.taskIds.indexOf(active.id.toString());
+      const newIndex = column.taskIds.indexOf(over.id.toString());
       if (oldIndex === newIndex) return;
 
       setBoardData((prev) => ({
@@ -183,68 +161,12 @@ export default function Board({ project, tasks }: BoardProps) {
         },
       }));
     } else {
-      console.log("DragEnd - Different column, updating status:", {
-        taskId: activeId,
-        newStatus: overColumnId,
-      });
-
       try {
-        const result = await updateTaskStatus(activeId, overColumnId);
-        console.log("Update task status result:", result);
-
-        setBoardData((prev) => {
-          // Remove task from all columns first
-          const updatedColumns = Object.entries(prev.columns).reduce(
-            (acc, [columnId, column]) => {
-              acc[columnId] = {
-                ...column,
-                taskIds: column.taskIds.filter((id) => id !== activeId),
-              };
-              return acc;
-            },
-            { ...prev.columns },
-          );
-
-          // Add to target column
-          return {
-            ...prev,
-            columns: {
-              ...updatedColumns,
-              [overColumnId]: {
-                ...updatedColumns[overColumnId],
-                taskIds: [...updatedColumns[overColumnId].taskIds, activeId],
-              },
-            },
-          };
-        });
+        await updateTaskStatus(active.id.toString(), overColumnId);
+        setBoardData(updateColumns(active.id.toString(), overColumnId));
       } catch (error) {
         console.error("Error updating task status:", error);
-        // Revert to initial state
-        setBoardData((prev) => {
-          // Remove task from all columns first
-          const updatedColumns = Object.entries(prev.columns).reduce(
-            (acc, [columnId, column]) => {
-              acc[columnId] = {
-                ...column,
-                taskIds: column.taskIds.filter((id) => id !== activeId),
-              };
-              return acc;
-            },
-            { ...prev.columns },
-          );
-
-          // Add back to initial column
-          return {
-            ...prev,
-            columns: {
-              ...updatedColumns,
-              [initialColumn]: {
-                ...updatedColumns[initialColumn],
-                taskIds: [...updatedColumns[initialColumn].taskIds, activeId],
-              },
-            },
-          };
-        });
+        setBoardData(updateColumns(active.id.toString(), initialColumn));
       }
     }
 
@@ -272,13 +194,12 @@ export default function Board({ project, tasks }: BoardProps) {
               const tasks = column.taskIds.map(
                 (taskId) => boardData.tasks[taskId],
               );
-
               return <Column key={column.id} column={column} tasks={tasks} />;
             })}
           </div>
         </div>
         <DragOverlay>
-          {activeId ? (
+          {activeId && (
             <Task
               task={
                 boardData.tasks[activeId] || {
@@ -289,7 +210,7 @@ export default function Board({ project, tasks }: BoardProps) {
               index={0}
               isDragging={true}
             />
-          ) : null}
+          )}
         </DragOverlay>
       </DndContext>
     </div>
