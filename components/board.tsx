@@ -1,6 +1,7 @@
 "use client";
 
 import { Database } from "@/types/supabase";
+import { updateTaskStatus } from "@/utils/supabase/actions/tasks";
 import {
   closestCorners,
   DndContext,
@@ -29,24 +30,30 @@ const mapTasksToBoardData = (
     [key: string]: Database["public"]["Tables"]["tasks"]["Row"];
   } = {};
   const columns = {
-    "column-1": { id: "column-1", title: "To Do", taskIds: [] as string[] },
-    "column-2": {
-      id: "column-2",
+    "To Do": { id: "To Do", title: "To Do", taskIds: [] as string[] },
+    "In Progress": {
+      id: "In Progress",
       title: "In Progress",
       taskIds: [] as string[],
     },
-    "column-3": { id: "column-3", title: "Done", taskIds: [] as string[] },
+    Completed: { id: "Completed", title: "Completed", taskIds: [] as string[] },
   };
 
   tasks.forEach((task) => {
     taskMap[task.id] = task;
-    columns["column-1"].taskIds.push(task.id); // Assuming all tasks start in "To do" column
+    if (task.status === "To Do") {
+      columns["To Do"].taskIds.push(task.id);
+    } else if (task.status === "In Progress") {
+      columns["In Progress"].taskIds.push(task.id);
+    } else if (task.status === "Completed") {
+      columns["Completed"].taskIds.push(task.id);
+    }
   });
 
   return {
     tasks: taskMap,
     columns,
-    columnOrder: ["column-1", "column-2", "column-3"],
+    columnOrder: ["To Do", "In Progress", "Completed"],
   };
 };
 
@@ -60,6 +67,7 @@ export default function Board({ project, tasks }: BoardProps) {
     mapTasksToBoardData(tasks),
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [initialColumn, setInitialColumn] = useState<string | null>(null);
 
   useEffect(() => {
     setBoardData(mapTasksToBoardData(tasks));
@@ -81,9 +89,19 @@ export default function Board({ project, tasks }: BoardProps) {
     return null;
   };
 
+  const getColumnId = (id: string): string | null => {
+    if (id in boardData.columns) {
+      return id;
+    }
+    return findColumnOfTask(id);
+  };
+
   const handleDragStart = (event: any) => {
     const { active } = event;
     setActiveId(active.id);
+    const startingColumn = findColumnOfTask(active.id);
+    setInitialColumn(startingColumn);
+    console.log("DragStart - Initial Column:", startingColumn);
   };
 
   const handleDragOver = (event: any) => {
@@ -93,65 +111,60 @@ export default function Board({ project, tasks }: BoardProps) {
     const activeId = active.id;
     const overId = over.id;
 
-    const activeColumnId = findColumnOfTask(activeId);
-    const overColumnId = findColumnOfTask(overId) || over.id;
+    const overColumnId = getColumnId(overId);
 
-    if (!activeColumnId || !overColumnId || activeColumnId === overColumnId) {
+    if (!initialColumn || !overColumnId || initialColumn === overColumnId) {
       return;
     }
 
     setBoardData((prev) => {
-      const activeColumn = prev.columns[activeColumnId];
-      const overColumn = prev.columns[overColumnId];
+      // First, remove the task from all columns to prevent duplicates
+      const updatedColumns = Object.entries(prev.columns).reduce(
+        (acc, [columnId, column]) => {
+          acc[columnId] = {
+            ...column,
+            taskIds: column.taskIds.filter((id) => id !== activeId),
+          };
+          return acc;
+        },
+        { ...prev.columns },
+      );
 
-      if (!activeColumn || !overColumn) {
-        return prev;
-      }
-
-      const activeTaskIds = [...activeColumn.taskIds];
-      const overTaskIds = [...overColumn.taskIds];
-
-      const activeIndex = activeTaskIds.indexOf(activeId);
-      const overIndex =
-        overId in prev.tasks ? overTaskIds.indexOf(overId) : overTaskIds.length;
-
+      // Then add it to the target column
       return {
         ...prev,
         columns: {
-          ...prev.columns,
-          [activeColumnId]: {
-            ...activeColumn,
-            taskIds: activeTaskIds.filter((id) => id !== activeId),
-          },
+          ...updatedColumns,
           [overColumnId]: {
-            ...overColumn,
-            taskIds: [
-              ...overTaskIds.slice(0, overIndex),
-              activeId,
-              ...overTaskIds.slice(overIndex),
-            ],
+            ...updatedColumns[overColumnId],
+            taskIds: [...updatedColumns[overColumnId].taskIds, activeId],
           },
         },
       };
     });
   };
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (!over) return;
 
     const activeId = active.id;
     const overId = over.id;
 
-    const activeColumnId = findColumnOfTask(activeId);
-    const overColumnId = findColumnOfTask(overId) || over.id;
+    const overColumnId = getColumnId(overId);
 
-    if (!activeColumnId || !overColumnId) {
+    console.log("DragEnd - Initial Column:", initialColumn);
+    console.log("DragEnd - Over Column:", overColumnId);
+    console.log("DragEnd - Over ID:", overId);
+
+    if (!initialColumn || !overColumnId) {
+      console.log("DragEnd - Missing column IDs");
       return;
     }
 
-    if (activeColumnId === overColumnId) {
-      const column = boardData.columns[activeColumnId];
+    if (initialColumn === overColumnId) {
+      console.log("DragEnd - Same column reorder");
+      const column = boardData.columns[initialColumn];
       if (!column) return;
 
       const oldIndex = column.taskIds.indexOf(activeId);
@@ -163,17 +176,80 @@ export default function Board({ project, tasks }: BoardProps) {
         ...prev,
         columns: {
           ...prev.columns,
-          [activeColumnId]: {
+          [initialColumn]: {
             ...column,
             taskIds: arrayMove(column.taskIds, oldIndex, newIndex),
           },
         },
       }));
     } else {
-      handleDragOver(event);
+      console.log("DragEnd - Different column, updating status:", {
+        taskId: activeId,
+        newStatus: overColumnId,
+      });
+
+      try {
+        const result = await updateTaskStatus(activeId, overColumnId);
+        console.log("Update task status result:", result);
+
+        setBoardData((prev) => {
+          // Remove task from all columns first
+          const updatedColumns = Object.entries(prev.columns).reduce(
+            (acc, [columnId, column]) => {
+              acc[columnId] = {
+                ...column,
+                taskIds: column.taskIds.filter((id) => id !== activeId),
+              };
+              return acc;
+            },
+            { ...prev.columns },
+          );
+
+          // Add to target column
+          return {
+            ...prev,
+            columns: {
+              ...updatedColumns,
+              [overColumnId]: {
+                ...updatedColumns[overColumnId],
+                taskIds: [...updatedColumns[overColumnId].taskIds, activeId],
+              },
+            },
+          };
+        });
+      } catch (error) {
+        console.error("Error updating task status:", error);
+        // Revert to initial state
+        setBoardData((prev) => {
+          // Remove task from all columns first
+          const updatedColumns = Object.entries(prev.columns).reduce(
+            (acc, [columnId, column]) => {
+              acc[columnId] = {
+                ...column,
+                taskIds: column.taskIds.filter((id) => id !== activeId),
+              };
+              return acc;
+            },
+            { ...prev.columns },
+          );
+
+          // Add back to initial column
+          return {
+            ...prev,
+            columns: {
+              ...updatedColumns,
+              [initialColumn]: {
+                ...updatedColumns[initialColumn],
+                taskIds: [...updatedColumns[initialColumn].taskIds, activeId],
+              },
+            },
+          };
+        });
+      }
     }
 
     setActiveId(null);
+    setInitialColumn(null);
   };
 
   return (

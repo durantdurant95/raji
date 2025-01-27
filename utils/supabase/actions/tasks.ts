@@ -48,3 +48,28 @@ export async function addTaskToProject(
   revalidatePath(`/projects/${projectId}`);
   return data;
 }
+
+export async function updateTaskStatus(taskId: string, status: string) {
+  console.log("Updating task status:", { taskId, status });
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({ status })
+      .eq("id", taskId)
+      .select();
+
+    if (error) {
+      console.error("Error updating task status:", error);
+      throw error;
+    }
+
+    console.log("Task status updated successfully:", data);
+    // revalidatePath("/projects/[id]");
+    return data;
+  } catch (error) {
+    console.error("Error in updateTaskStatus:", error);
+    throw error;
+  }
+}
