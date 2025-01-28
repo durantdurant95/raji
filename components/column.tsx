@@ -21,7 +21,9 @@ export default function Column({ column, tasks }: ColumnProps) {
 
   return (
     <div className="flex h-full max-h-full flex-1 flex-col rounded-lg bg-sidebar shadow-md">
-      <h2 className="p-4 text-lg font-semibold">{column.title}</h2>
+      <div className="p-4">
+        <h2 className="text-lg font-semibold">{column.title}</h2>
+      </div>
       <SortableContext
         items={tasks.map((task) => task.id)}
         strategy={verticalListSortingStrategy}

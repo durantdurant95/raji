@@ -16,10 +16,24 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import {
+  CalendarArrowDown,
+  CalendarArrowUp,
+  SortAsc,
+  SortDesc,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import AddTask from "./add-task-dialog";
 import Column from "./column";
 import Task from "./task";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 type BoardData = {
   tasks: { [key: string]: Database["public"]["Tables"]["tasks"]["Row"] };
@@ -72,6 +86,11 @@ export default function Board({ project, tasks }: BoardProps) {
   );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [initialColumn, setInitialColumn] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOption, setSortOption] = useState<"priority" | "date" | null>(
+    null,
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -177,10 +196,82 @@ export default function Board({ project, tasks }: BoardProps) {
     setInitialColumn(null);
   };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSortChange = (option: "priority" | "date") => {
+    if (sortOption === option) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortOption(option);
+      setSortOrder("asc");
+    }
+  };
+
+  const filterAndSortTasks = (
+    tasks: Database["public"]["Tables"]["tasks"]["Row"][],
+  ) => {
+    return tasks
+      .filter((task) =>
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .sort((a, b) => {
+        if (!sortOption) return 0;
+        if (sortOption === "priority") {
+          const priorityA = a.priority ?? 0;
+          const priorityB = b.priority ?? 0;
+          return sortOrder === "asc"
+            ? (priorityA as number) - (priorityB as number)
+            : (priorityB as number) - (priorityA as number);
+        } else {
+          const dateA = a.due_date ? new Date(a.due_date).getTime() : 0;
+          const dateB = b.due_date ? new Date(b.due_date).getTime() : 0;
+          return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+        }
+      });
+  };
+
   return (
     <div className="flex h-full flex-col">
-      <div className="z-10 flex items-center justify-between p-4">
-        <h1 className="text-xl font-bold">{project.name}</h1>
+      <div className="z-10 flex items-center justify-between space-x-2 p-4">
+        <h1 className="flex-grow text-xl font-bold">{project.name}</h1>
+        <Input
+          type="text"
+          placeholder="Search tasks"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="flex-1"
+        />
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                variant="ghost"
+                onClick={() => handleSortChange("priority")}
+              >
+                {sortOption === "priority" && sortOrder === "asc" ? (
+                  <SortAsc />
+                ) : (
+                  <SortDesc />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sort by priority</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button variant="ghost" onClick={() => handleSortChange("date")}>
+                {sortOption === "date" && sortOrder === "asc" ? (
+                  <CalendarArrowUp />
+                ) : (
+                  <CalendarArrowDown />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sort by date</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <AddTask projectId={project.id} />
       </div>
       <DndContext
@@ -199,8 +290,8 @@ export default function Board({ project, tasks }: BoardProps) {
           <div className="flex h-full w-full space-x-4">
             {boardData.columnOrder.map((columnId) => {
               const column = boardData.columns[columnId];
-              const tasks = column.taskIds.map(
-                (taskId) => boardData.tasks[taskId],
+              const tasks = filterAndSortTasks(
+                column.taskIds.map((taskId) => boardData.tasks[taskId]),
               );
               return <Column key={column.id} column={column} tasks={tasks} />;
             })}

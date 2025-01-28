@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { addTaskToProject } from "@/utils/supabase/actions/tasks";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, ClipboardPlus, Loader2 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -88,7 +88,10 @@ export default function AddTask({ projectId }: AddTaskProps) {
       onOpenChange={(open) => !isLoading && setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">Add Task</Button>
+        <Button>
+          <ClipboardPlus />
+          Add Task
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
