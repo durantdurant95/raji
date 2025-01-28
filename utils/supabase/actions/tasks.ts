@@ -45,7 +45,7 @@ export async function addTaskToProject(
     console.error("Error adding task:", error);
     return null;
   }
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects/[project]");
   return data;
 }
 
@@ -69,6 +69,40 @@ export async function updateTaskStatus(taskId: string, status: string) {
     return data;
   } catch (error) {
     console.error("Error in updateTaskStatus:", error);
+    throw error;
+  }
+}
+
+export async function updateTask(
+  taskId: string,
+  updates: Partial<
+    Omit<
+      Database["public"]["Tables"]["tasks"]["Row"],
+      "id" | "created_at" | "updated_at"
+    >
+  >,
+) {
+  const supabase = await createClient();
+
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        ...updates,
+      })
+      .eq("id", taskId)
+      .select();
+    console.log("Updating task with:", { taskId, updates });
+    if (error) {
+      console.error("Error updating task:", error);
+      throw error;
+    }
+
+    console.log("Task updated successfully:", data);
+    revalidatePath("/");
+    return data;
+  } catch (error) {
+    console.error("Error in updateTask:", error);
     throw error;
   }
 }

@@ -1,7 +1,10 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { format } from "date-fns";
-import { AlertCircle, CalendarIcon } from "lucide-react";
+import { CalendarIcon, GripVertical } from "lucide-react";
+import EditTask from "./edit-task-dialog";
 
 type TaskProps = {
   task: {
@@ -31,34 +34,65 @@ export default function Task({ task, isDragging = false }: TaskProps) {
     transition,
   };
 
-  const opacity = isDragging || isSortableDragging ? 0.4 : 1;
+  const priorityColors = {
+    low: "bg-green-500/10 text-green-500",
+    medium: "bg-yellow-500/10 text-yellow-500",
+    high: "bg-red-500/10 text-red-500",
+  };
 
   return (
-    <div
+    <Card
       ref={setNodeRef}
-      style={{ ...style, opacity }}
-      {...attributes}
-      {...listeners}
-      className={`cursor-move rounded bg-secondary p-4 shadow ${
-        isDragging || isSortableDragging ? "ring-2 ring-primary" : ""
+      style={style}
+      className={`relative mb-2 bg-secondary ${
+        isDragging || isSortableDragging ? "opacity-50" : ""
       }`}
     >
-      <h3 className="mb-2 font-semibold">{task.title}</h3>
-      {task.description && <p className="mb-2 text-sm">{task.description}</p>}
-      <div className="flex items-center justify-between text-xs">
-        {task.due_date && (
-          <div className="flex items-center">
-            <CalendarIcon className="mr-1 h-4 w-4" />
-            {format(new Date(task.due_date), "MMM d, yyyy")}
+      <CardHeader className="flex flex-row items-center justify-between p-4">
+        <div className="flex items-center gap-2">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab hover:cursor-grabbing"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
           </div>
-        )}
-        {task.priority && (
-          <div className="flex items-center">
-            <AlertCircle className="mr-1 h-4 w-4" />
-            {task.priority}
+          <span className="font-medium">{task.title}</span>
+        </div>
+        <EditTask
+          task={{
+            ...task,
+            created_at: null,
+            updated_at: null,
+            project_id: "",
+          }}
+        />
+      </CardHeader>
+      {(task.description || task.due_date || task.priority) && (
+        <CardContent className="space-y-2 pt-0">
+          {task.description && (
+            <p className="text-sm text-muted-foreground">{task.description}</p>
+          )}
+          <div className="flex items-center justify-between gap-2">
+            {task.due_date && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CalendarIcon className="h-3 w-3" />
+                {format(new Date(task.due_date), "MMM d, yyyy")}
+              </div>
+            )}
+            {task.priority && (
+              <Badge
+                variant="secondary"
+                className={
+                  priorityColors[task.priority as keyof typeof priorityColors]
+                }
+              >
+                {task.priority}
+              </Badge>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </CardContent>
+      )}
+    </Card>
   );
 }

@@ -21,10 +21,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { addTaskToProject } from "@/utils/supabase/actions/tasks";
+import { Database } from "@/types/supabase";
+import { updateTask } from "@/utils/supabase/actions/tasks";
 import { format } from "date-fns";
-import { CalendarIcon, ClipboardPlus, Loader2 } from "lucide-react";
-import type React from "react";
+import { CalendarIcon, Loader2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -33,50 +33,42 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-type AddTaskProps = {
-  projectId: string;
+type EditTaskProps = {
+  task: Database["public"]["Tables"]["tasks"]["Row"];
 };
 
-export default function AddTask({ projectId }: AddTaskProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
-  const [priority, setPriority] = useState<string>("low");
-  const [status, setStatus] = useState("To Do");
+export default function EditTask({ task }: EditTaskProps) {
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || "");
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    task.due_date ? new Date(task.due_date) : undefined,
+  );
+  const [priority, setPriority] = useState<string>(task.priority || "low");
+  const [status, setStatus] = useState(task.status);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const resetForm = () => {
-    setTitle("");
-    setDescription("");
-    setDueDate(undefined);
-    setPriority("low");
-    setStatus("To Do");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpdateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     try {
       setIsLoading(true);
-      const newTask = await addTaskToProject(projectId, {
+      const updatedTask = await updateTask(task.id, {
         title: title.trim(),
         description: description.trim(),
         status,
-        project_id: projectId,
         due_date: dueDate ? dueDate.toISOString() : null,
         priority,
       });
 
-      if (newTask) {
-        toast.success("Task added successfully");
-        resetForm();
+      if (updatedTask) {
+        toast.success("Task updated successfully");
         setIsOpen(false);
       }
     } catch (error) {
-      toast.error("Failed to add task");
-      console.error("Error adding task:", error);
+      toast.error("Failed to update task");
+      console.error("Error updating task:", error);
     } finally {
       setIsLoading(false);
     }
@@ -88,19 +80,18 @@ export default function AddTask({ projectId }: AddTaskProps) {
       onOpenChange={(open) => !isLoading && setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button>
-          <ClipboardPlus />
-          Add Task
+        <Button variant="ghost" size="icon" className="relative z-50">
+          <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Task</DialogTitle>
+          <DialogTitle>Edit Task</DialogTitle>
           <DialogDescription>
-            Create a new task for your project. Fill in the details below.
+            Update the details of your task below.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleUpdateTask} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -212,10 +203,10 @@ export default function AddTask({ projectId }: AddTaskProps) {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Adding Task...
+                  Updating Task...
                 </>
               ) : (
-                "Add Task"
+                "Update Task"
               )}
             </Button>
           </div>
