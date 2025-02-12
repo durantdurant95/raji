@@ -7,7 +7,7 @@ export default function Page() {
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-6">
           <div className="flex flex-col items-center text-center space-y-4">
-            <div className="rounded-full bg-gradient-to-r from-green-500 to-green-800 p-3">
+            <div className="rounded-full bg-linear-to-r from-green-500 to-green-800 p-3">
               <FolderKanban className="h-12 w-12 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">

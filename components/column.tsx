@@ -30,7 +30,7 @@ export default function Column({ column, tasks }: ColumnProps) {
       >
         <div
           ref={setNodeRef}
-          className="flex-grow space-y-2 overflow-y-auto p-4"
+          className="grow space-y-2 overflow-y-auto p-4"
         >
           {tasks.map((task, index) => (
             <Task key={task.id} task={task} index={index} />

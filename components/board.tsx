@@ -197,7 +197,7 @@ export default function Board({ project, tasks }: BoardProps) {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex-grow overflow-x-auto overflow-y-hidden p-4">
+        <div className="grow overflow-x-auto overflow-y-hidden p-4">
           <div className="flex h-full w-full space-x-4">
             {boardData.columnOrder.map((columnId) => {
               const column = boardData.columns[columnId];

@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/50 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-b from-background to-background/50 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
       <div className="absolute bottom-4 right-4">
         <ThemeSwitcher />
       </div>
